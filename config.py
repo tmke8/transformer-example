@@ -41,7 +41,7 @@ class TrainConfig(BaseConfig):
     """number of hidden units per layer"""
     nlayers: int = 2
     """number of layers"""
-    lr: float = 20
+    lr: float = 5
     """initial learning rate"""
     clip: float = 0.25
     """gradient clipping"""
@@ -53,8 +53,6 @@ class TrainConfig(BaseConfig):
     """sequence length"""
     dropout: float = 0.2
     """dropout applied to layers (0 = no dropout)"""
-    tied: bool = False
-    """tie the word embedding and softmax weights"""
     log_interval: int = 200
     """report interval"""
     save: Path = Path("model.pt")

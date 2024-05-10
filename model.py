@@ -6,15 +6,17 @@ import torch.nn.functional as F
 from torch import Tensor
 
 
-# Temporarily leave PositionalEncoding module here. Will be moved somewhere else.
 class PositionalEncoding(nn.Module):
-    r"""Inject some information about the relative or absolute position of the tokens in the sequence.
-        The positional encodings have the same dimension as the embeddings, so that the two can be summed.
-        Here, we use sine and cosine functions of different frequencies.
+    r"""Inject information about the relative or absolute position of the tokens in the sequence.
+
+    The positional encodings have the same dimension as the embeddings, so that the two can be
+    summed. Here, we use sine and cosine functions of different frequencies.
+
     .. math:
         \text{PosEncoder}(pos, 2i) = sin(pos/10000^(2i/d_model))
         \text{PosEncoder}(pos, 2i+1) = cos(pos/10000^(2i/d_model))
         \text{where pos is the word position and i is the embed idx)
+
     Args:
         d_model: the embed dim (required).
         dropout: the dropout value (default=0.1).
@@ -37,6 +39,7 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         r"""Inputs of forward function
+
         Args:
             x: the sequence fed to the positional encoder model (required).
         Shape:
@@ -59,8 +62,7 @@ class TransformerModel(nn.Transformer):
         super().__init__(
             d_model=ninp, nhead=nhead, dim_feedforward=nhid, num_encoder_layers=nlayers
         )
-        self.model_type = "Transformer"
-        self.src_mask = None
+        self.src_mask: Tensor | None = None
         self.pos_encoder = PositionalEncoding(ninp, dropout)
 
         self.input_emb = nn.Embedding(ntoken, ninp)
@@ -75,7 +77,7 @@ class TransformerModel(nn.Transformer):
         nn.init.zeros_(self.decoder.bias)
         nn.init.uniform_(self.decoder.weight, -initrange, initrange)
 
-    def forward(self, src: Tensor, has_mask: bool = True) -> Tensor:
+    def forward(self, src: Tensor, *, has_mask: bool) -> Tensor:
         if has_mask:
             device = src.device
             if self.src_mask is None or self.src_mask.size(0) != len(src):
