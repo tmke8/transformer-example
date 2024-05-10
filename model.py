@@ -53,20 +53,20 @@ class PositionalEncoding(nn.Module):
         return self.dropout(x)
 
 
-class TransformerModel(nn.Transformer):
-    """Container module with an encoder, a recurrent or transformer module, and a decoder."""
-
+class TransformerModel(nn.Module):
     def __init__(
         self, ntoken: int, ninp: int, nhead: int, nhid: int, nlayers: int, dropout: float = 0.5
     ):
-        super().__init__(
-            d_model=ninp, nhead=nhead, dim_feedforward=nhid, num_encoder_layers=nlayers
+        super().__init__()
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=ninp, nhead=nhead, dim_feedforward=nhid
         )
-        self.src_mask: Tensor | None = None
+        self.encoder = nn.TransformerEncoder(encoder_layer, nlayers, norm=nn.LayerNorm(ninp))
         self.pos_encoder = PositionalEncoding(ninp, dropout)
 
         self.input_emb = nn.Embedding(ntoken, ninp)
         self.ninp = ninp
+        self.cached_mask: Tensor | None = None
         self.decoder = nn.Linear(ninp, ntoken)
 
         self.init_weights()
@@ -77,17 +77,21 @@ class TransformerModel(nn.Transformer):
         nn.init.zeros_(self.decoder.bias)
         nn.init.uniform_(self.decoder.weight, -initrange, initrange)
 
+        # Initiate parameters in the transformer
+        for p in self.encoder.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
+
     def forward(self, src: Tensor, *, has_mask: bool) -> Tensor:
         if has_mask:
-            device = src.device
-            if self.src_mask is None or self.src_mask.size(0) != len(src):
-                mask = self.generate_square_subsequent_mask(len(src), device=device)
-                self.src_mask = mask
+            if self.cached_mask is None or self.cached_mask.size(0) != len(src):
+                mask = nn.Transformer.generate_square_subsequent_mask(len(src), device=src.device)
+                self.cached_mask = mask
         else:
-            self.src_mask = None
+            self.cached_mask = None
 
         src = self.input_emb(src) * math.sqrt(self.ninp)
         src = self.pos_encoder(src)
-        output = self.encoder(src, mask=self.src_mask)
+        output = self.encoder(src, mask=self.cached_mask)
         output = self.decoder(output)
         return F.log_softmax(output, dim=-1)
