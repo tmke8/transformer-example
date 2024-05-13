@@ -35,7 +35,7 @@ def main(hydra_config: DictConfig) -> None:
     with open(args.outf, "w") as outf:
         with torch.no_grad():  # no tracking history
             for i in range(args.words):
-                output = model(input, has_mask=False)
+                output = model(input, use_mask=False)
                 word_weights = output[-1].squeeze().div(args.temperature).exp().cpu()
                 word_idx = torch.multinomial(word_weights, 1)[0]
                 word_tensor = torch.Tensor([[word_idx]]).long().to(args.device)

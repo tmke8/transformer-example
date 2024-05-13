@@ -33,6 +33,7 @@ typeCheckingMode = "strict"
 venvPath = "."
 venv = ".venv"
 reportUnknownVariableType = "none"
+reportUnknownMemberType = "none"
 
 [tool.ruff]
 line-length = 100

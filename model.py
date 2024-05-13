@@ -21,6 +21,7 @@ class PositionalEncoding(nn.Module):
         d_model: the embed dim (required).
         dropout: the dropout value (default=0.1).
         max_len: the max. length of the incoming sequence (default=5000).
+
     Examples:
         >>> pos_encoder = PositionalEncoding(d_model)
     """
@@ -82,8 +83,8 @@ class TransformerModel(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
-    def forward(self, src: Tensor, *, has_mask: bool) -> Tensor:
-        if has_mask:
+    def forward(self, src: Tensor, *, use_mask: bool) -> Tensor:
+        if use_mask:
             if self.cached_mask is None or self.cached_mask.size(0) != len(src):
                 mask = nn.Transformer.generate_square_subsequent_mask(len(src), device=src.device)
                 self.cached_mask = mask
